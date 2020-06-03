@@ -1,0 +1,14 @@
+{
+    "name": "monorepo-experiment",
+    "private": true,
+    "workspaces": [
+        "packages/*"
+    ],
+    "devDependencies": {
+        "lerna": "^3.22.0"
+    },
+    "scripts": {
+        "ci": "./scripts/ci",
+        "lint": "lerna exec --no-bail yarn lint"
+    }
+}

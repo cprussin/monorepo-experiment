@@ -1,0 +1,13 @@
+{
+    "name": "@monorepo-experiment/bar",
+    "version": "0.0.0",
+    "main": "index.js",
+    "private": true,
+    "scripts": {
+        "lint": "eslint .",
+        "lint:ci": "eslint . --format json -o lint-report.json"
+    },
+    "devDependencies": {
+        "eslint": "^7.1.0"
+    }
+}

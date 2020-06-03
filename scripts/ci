@@ -1,0 +1,6 @@
+#!/bin/sh
+
+lerna exec --no-bail yarn lint:ci
+status=$?
+sed -s 's/$/,/' packages/*/lint-report.json > lint-report.json
+exit $status
