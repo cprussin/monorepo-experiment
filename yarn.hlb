@@ -1,0 +1,47 @@
+export mountSrcWithNodeModules
+
+fs _yarnSources(fs src) {
+    image "alpine";
+    dir "/src";
+    run <<~DONE
+        for dir in packages/*; do
+            mkdir -p /out/$dir &&
+            cp $dir/package.json /out/$dir;
+        done &&
+        cp package.json yarn.lock /out
+    DONE with option {
+        mount src "/src" with readonly;
+        mount scratch "/out" as yarnSources;
+    }
+}
+
+fs _nodeModules(fs src) {
+    image "node:alpine";
+    run <<~DONE
+        cp -R /src/* /out &&
+        cd /out &&
+        yarn
+    DONE with option {
+        mount fs { yarnSources src; } "/src" with readonly;
+        mount scratch "/out" as nodeModules;
+    }
+}
+
+fs _srcWithNodeModules(fs src) {
+    image "alpine";
+    dir "/src";
+    run <<~DONE
+        ln -s /modules/node_modules /src &&
+        for file in packages/*; do
+            ln -s /modules/$file/node_modules $file;
+        done
+    DONE with option {
+        mount fs { nodeModules src; } "/modules" with readonly;
+        mount src "/src" as srcWithNodeModules;
+    }
+}
+
+option::run mountSrcWithNodeModules(fs src, string target) {
+    mount fs { nodeModules src; } "/modules" with readonly;
+    mount fs { srcWithNodeModules src; } target;
+}

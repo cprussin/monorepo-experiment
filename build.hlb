@@ -1,0 +1,11 @@
+import module "./module.hlb"
+
+fs src() {
+    local "." with option {
+        excludePatterns "**/node_modules"
+    }
+}
+
+fs lintReport() {
+    module.lintReport src;
+}

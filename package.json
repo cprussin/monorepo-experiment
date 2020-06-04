@@ -8,7 +8,7 @@
         "lerna": "^3.22.0"
     },
     "scripts": {
-        "ci": "./scripts/ci",
-        "lint": "lerna exec --no-bail yarn lint"
+        "lint": "lerna exec --no-bail yarn lint",
+        "lint:ci": "./scripts/ci/lint"
     }
 }

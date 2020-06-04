@@ -1,0 +1,12 @@
+export lintReport
+
+import yarn "./yarn.hlb"
+
+fs _lintReport(fs src) {
+    image "node:alpine";
+    dir "/src";
+    run "yarn --silent lint:ci > /out/result.json" with option {
+        yarn.mountSrcWithNodeModules src "/src";
+        mount scratch "/out" as lintReport;
+    }
+}

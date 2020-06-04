@@ -1,0 +1,104 @@
+#!/usr/bin/env node
+
+const { exec } = require('child_process');
+const { promisify } = require('util');
+const path = require('path');
+const fs = require('fs');
+
+const conclude = ({ title, conclusion, summary, text, annotations }) => {
+    console.log(JSON.stringify({
+        conclusion,
+        output: {
+            title,
+            summary,
+            text,
+            annotations
+        }
+    }));
+};
+
+const getLintReport = async (workspaceLocation) => {
+    try {
+        return JSON.parse(await fs.promises.readFile(
+            path.join(workspaceLocation, 'lint-report.json'),
+            { encoding: 'utf8' }
+        ));
+    } catch (e) {
+        if (e.code === 'ENOENT') {
+            return {};
+        } else {
+            throw e;
+        }
+    }
+};
+
+const readLintReports = async (workspaces) =>
+    Promise.all(
+        Object.keys(workspaces).map(workspace =>
+            Promise.all([
+                Promise.resolve(workspace),
+                getLintReport(workspaces[workspace].location)
+            ])
+        )
+    );
+
+const lintFailureMessage = count =>
+      count === 1
+      ? 'A lint failure was found'
+      : `${count} lint failures were found`;
+
+
+const main = async () => {
+    await promisify(exec)('yarn --silent lerna exec --no-bail yarn lint:ci || true');
+    const workspaceInfo = await promisify(exec)('yarn --silent workspaces info');
+    const lintReports = await readLintReports(JSON.parse(workspaceInfo.stdout));
+    const annotations = lintReports.map(([ workspace, files ]) => {
+        const workspaceFailures = files
+            .filter(file => file.messages.length)
+            .map(file =>
+                file.messages.map(message => ({
+                    path: file.filePath.substring(process.cwd().length + 1),
+                    start_line: message.line,
+                    end_line: message.endLine,
+                    start_column: message.column,
+                    end_column: message.endColumn,
+                    annotation_level: ['notice', 'info', 'failure'][message.severity],
+                    title: `eslint [${message.ruleId}]`,
+                    message: message.message,
+                    raw_details: JSON.stringify(message, null, 4)
+                }))
+            )
+            .reduce((acc, cur) => acc.concat(cur), []);
+        return [ workspace, workspaceFailures ];
+    }).filter(([ _, failures ]) => failures.length);
+
+    throw new Error('foo');
+
+    if (annotations.length) {
+        const count = annotations.reduce((acc, [_, failures]) => acc + failures.length, 0);
+        const workspaces = annotations.map(([ workspace ]) => workspace);
+        const allAnnotations = annotations
+              .map(([ _, annotations ]) => annotations)
+              .reduce((acc, cur) => acc.concat(cur), []);
+        conclude({
+            conclusion: 'failure',
+            summary: lintFailureMessage(count),
+            text: `Lint check failed for workspaces:\n${workspaces.map(w => ` - \`${w}\``).join('\n')}`,
+            annotations: allAnnotations
+        })
+    } else {
+        conclude({
+            conclusion: 'success',
+            summary: 'No lint failures detected!'
+        })
+    }
+};
+
+main().catch(err => {
+    conclude({
+        title: 'Error occurred while running lint!'
+        conclusion: 'failure',
+        summary: err.message,
+        text: '```\n' + err.stack + '\n```',
+    });
+});
