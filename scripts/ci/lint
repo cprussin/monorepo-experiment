@@ -79,8 +79,9 @@ const main = async () => {
               .map(([ _, annotations ]) => annotations)
               .reduce((acc, cur) => acc.concat(cur), []);
         conclude({
+            title: lintFailureMessage(count),
             conclusion: 'failure',
-            summary: lintFailureMessage(count),
+            summary: `Lint check failed for workspaces:\n${workspaces.map(w => ` - \`${w}\``).join('\n')}`,
             text: `Lint check failed for workspaces:\n${workspaces.map(w => ` - \`${w}\``).join('\n')}`,
             annotations: allAnnotations
         })
