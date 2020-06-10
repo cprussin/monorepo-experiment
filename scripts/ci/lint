@@ -72,8 +72,6 @@ const main = async () => {
         return [ workspace, workspaceFailures ];
     }).filter(([ _, failures ]) => failures.length);
 
-    throw new Error('foo');
-
     if (annotations.length) {
         const count = annotations.reduce((acc, [_, failures]) => acc + failures.length, 0);
         const workspaces = annotations.map(([ workspace ]) => workspace);
@@ -89,7 +87,7 @@ const main = async () => {
     } else {
         conclude({
             conclusion: 'success',
-            summary: 'No lint failures detected!'
+            title: 'No lint failures detected!'
         })
     }
 };
@@ -98,7 +96,7 @@ main().catch(err => {
     conclude({
         title: 'Error occurred while running lint!',
         conclusion: 'failure',
-        summary: err.message,
+        summary: err.toString(),
         text: '```\n' + err.stack + '\n```',
     });
 });
