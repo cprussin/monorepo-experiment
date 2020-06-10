@@ -5,16 +5,22 @@ const { promisify } = require('util');
 const path = require('path');
 const fs = require('fs');
 
-const conclude = ({ title, conclusion, summary, text, annotations }) => {
-    console.log(JSON.stringify({
-        conclusion,
-        output: {
-            title,
-            summary,
-            text,
-            annotations
-        }
-    }));
+const conclude = (payload) => {
+    console.log(JSON.stringify(payload));
+};
+
+const fail = payload => {
+    conclude({
+        conclusion: 'failure',
+        output: payload
+    });
+};
+
+const succeed = payload => {
+    conclude({
+        conclusion: 'success',
+        output: payload
+    });
 };
 
 const getLintReport = async (workspaceLocation) => {
@@ -78,25 +84,22 @@ const main = async () => {
         const allAnnotations = annotations
               .map(([ _, annotations ]) => annotations)
               .reduce((acc, cur) => acc.concat(cur), []);
-        conclude({
+        fail({
             title: lintFailureMessage(count),
-            conclusion: 'failure',
             summary: `Lint check failed for workspaces:\n${workspaces.map(w => ` - \`${w}\``).join('\n')}`,
             text: `Lint check failed for workspaces:\n${workspaces.map(w => ` - \`${w}\``).join('\n')}`,
             annotations: allAnnotations
         })
     } else {
-        conclude({
-            conclusion: 'success',
+        succeed({
             title: 'No lint failures detected!'
         })
     }
 };
 
 main().catch(err => {
-    conclude({
+    fail({
         title: 'Error occurred while running lint!',
-        conclusion: 'failure',
         summary: err.toString(),
         text: '```\n' + err.stack + '\n```',
     });
