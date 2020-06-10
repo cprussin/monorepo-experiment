@@ -92,7 +92,8 @@ const main = async () => {
         })
     } else {
         succeed({
-            title: 'No lint failures detected!'
+            title: 'No lint failures detected!',
+            summary: ''
         })
     }
 };
