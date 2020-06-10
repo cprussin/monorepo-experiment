@@ -96,7 +96,7 @@ const main = async () => {
 
 main().catch(err => {
     conclude({
-        title: 'Error occurred while running lint!'
+        title: 'Error occurred while running lint!',
         conclusion: 'failure',
         summary: err.message,
         text: '```\n' + err.stack + '\n```',
